@@ -32,6 +32,9 @@ static const char * const error_string[MAXERROR] =
  * Print a number (base <= 16) in reverse order,
  * using specified putch function and associated pointer putdat.
  */
+static int padding_space = 0;
+static int padding_max_width = 0;
+static int one_number_flag = 0; // 0 init, 1 one, 2 more than one
 static void
 printnum(void (*putch)(int, void*), void *putdat,
 	 unsigned long long num, unsigned base, int width, int padc)
@@ -40,19 +43,35 @@ printnum(void (*putch)(int, void*), void *putdat,
 	// space on the right side if neccesary.
 	// you can add helper function if needed.
 	// your code here:
-
+	if (padc == '-' && width > padding_max_width)
+		padding_max_width = width;
 
 	// first recursively print all preceding (more significant) digits
 	if (num >= base) {
+		if (padc == '-' && one_number_flag == 0)
+			one_number_flag = 2;
 		printnum(putch, putdat, num / base, base, width - 1, padc);
 	} else {
+		if (padc == '-' && one_number_flag == 0)
+			one_number_flag = 1;
 		// print any needed pad characters before first digit
-		while (--width > 0)
-			putch(padc, putdat);
+		while (--width > 0) {
+			if (padc != '-')
+				putch(padc, putdat);
+			else
+				padding_space++;
+		}
 	}
 
 	// then print this (the least significant) digit
 	putch("0123456789abcdef"[num % base], putdat);
+	if ((width == padding_max_width || one_number_flag == 1) && padc == '-') {
+		while(padding_space-- > 0)
+			putch(' ', putdat);
+		padding_space = 0;
+		padding_max_width = 0;
+		one_number_flag = 0;
+	}
 }
 
 // Get an unsigned int of various possible sizes from a varargs list,
@@ -114,10 +133,6 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 		case '-':
 			padc = '-';
 			goto reswitch;
-
-		case '+':
-   			padc = '+';
-    		goto reswitch;
 			
 		// flag to pad with 0's instead of spaces
 		case '0':
@@ -217,14 +232,15 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 		case 'o':
 			// Replace this with your code.
 			// display a number in octal form and the form should begin with '0'
-			/* Original Code
+			
+			/* origin code
 			putch('X', putdat);
 			putch('X', putdat);
 			putch('X', putdat);
 			break;
 			*/
-
-			// Solution for Exercise 8.
+			
+			// solution for exercise-8
 			putch('0', putdat);
 			num = getuint(&ap, lflag);
 			base = 8;
@@ -268,6 +284,19 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
             const char *overflow_error = "\nwarning! The value %n argument pointed to has been overflowed!\n";
 
             // Your code here
+			char* input_pos = putdat;
+			char* extra_para = va_arg(ap, char*);
+			if (extra_para == NULL) {
+				cprintf("%s", null_error);
+			}
+			else if ((*input_pos) & 0x80){		// if > 127
+				cprintf("%s", overflow_error);
+				*extra_para = *input_pos;				// -1
+			}
+			else {
+				*extra_para = *input_pos;
+			}
+
 
             break;
         }

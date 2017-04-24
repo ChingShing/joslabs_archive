@@ -23,8 +23,8 @@ void
 i386_init(void)
 {
 	extern char edata[], end[];
-   	// Lab1 only
-	//char chnum1 = 0, chnum2 = 0, ntest[256] = {};
+    // Lab1 only
+    char chnum1 = 0, chnum2 = 0, ntest[256] = {};
 
 	// Before doing anything else, complete the ELF loading process.
 	// Clear the uninitialized global data (BSS) section of our program.
@@ -35,16 +35,14 @@ i386_init(void)
 	// Can't call cprintf until after we do this!
 	cons_init();
 
-	int x = 1, y = 3, z = 4;
-	cprintf("x %d, y %x, z %d\n", x, y, z);
-	// cprintf("6828 decimal is %o octal!%n\n%n", 6828, &chnum1, &chnum2);
-	// cprintf("pading space in the right to number 22: %-8d.\n", 22);
-	// cprintf("chnum1: %d chnum2: %d\n", chnum1, chnum2);
-	// cprintf("%n", NULL);
-	// memset(ntest, 0xd, sizeof(ntest) - 1);
-	// cprintf("%s%n", ntest, &chnum1); 
-	// cprintf("chnum1: %d\n", chnum1);
-	// cprintf("show me the sign: %+d, %+d\n", 1024, -1024);
+	cprintf("6828 decimal is %o octal!%n\n%n", 6828, &chnum1, &chnum2);
+	cprintf("pading space in the right to number 22: %-8d.\n", 22);
+    cprintf("chnum1: %d chnum2: %d\n", chnum1, chnum2);
+    cprintf("%n", NULL);
+    memset(ntest, 0xd, sizeof(ntest) - 1);
+    cprintf("%s%n", ntest, &chnum1); 
+    cprintf("chnum1: %d\n", chnum1);
+
 
 
 	// Test the stack backtrace function (lab 1 only)

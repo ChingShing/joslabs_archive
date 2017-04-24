@@ -23,7 +23,9 @@ struct Command {
 
 static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
+	{ "time", "Display a commond runtime, usage: time [command]", mon_time},
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
+	{ "backtrace", "Display function backtrace", mon_backtrace}
 };
 #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
@@ -38,6 +40,41 @@ mon_help(int argc, char **argv, struct Trapframe *tf)
 
 	for (i = 0; i < NCOMMANDS; i++)
 		cprintf("%s - %s\n", commands[i].name, commands[i].desc);
+	return 0;
+}
+
+int
+mon_time(int argc, char **argv, struct Trapframe *tf)
+{
+	uint32_t begin_low = 0;
+	uint32_t begin_high = 0;
+	uint32_t end_low = 0;
+	uint32_t end_high = 0;
+	int i;
+
+	if (argc == 1) {
+		cprintf("Please enter: time [command]\n");
+		return 0;
+	}
+	for (i = 0; i < NCOMMANDS; i++) {
+		if (strcmp(argv[1], commands[i].name) == 0)
+			break;
+		if (i == NCOMMANDS-1) {
+			cprintf("Unknown command after time '%s'\n", argv[1]);
+			return 0;
+		}
+	}
+	argc--;
+	argv++;
+
+	__asm __volatile("rdtsc" : "=a" (begin_low), "=d" (begin_high));
+	commands[i].func(argc, argv, tf);
+	__asm __volatile("rdtsc" : "=a" (end_low), "=d" (end_high));
+	
+	uint64_t begin_total = ((uint64_t)begin_high << 32) | begin_low; 
+	uint64_t end_total = ((uint64_t)end_high << 32) | end_low; 
+	cprintf("%s cycles: %llu\n", argv[0], end_total-begin_total);
+
 	return 0;
 }
 
@@ -89,9 +126,33 @@ start_overflow(void)
     char *pret_addr;
 
 	// Your code here.
-    
-
-
+	// replace 'ret to overflow_me' to 'ret to do_overflow' 
+	pret_addr = (char*)read_pretaddr(); // get eip pointer
+	int i = 0;
+	for (;i < 256; i++) {
+		str[i] = 'h';
+		if (i%2)
+			str[i] = 'a';
+	}
+	void (*do_overflow_t)();
+	do_overflow_t = do_overflow;
+	uint32_t ret_addr = (uint32_t)do_overflow_t+3; // ignore stack asm code
+	
+	uint32_t ret_byte_0 = ret_addr & 0xff;
+	uint32_t ret_byte_1 = (ret_addr >> 8) & 0xff;
+	uint32_t ret_byte_2 = (ret_addr >> 16) & 0xff;
+	uint32_t ret_byte_3 = (ret_addr >> 24) & 0xff;
+	str[ret_byte_0] = '\0';
+	cprintf("%s%n\n", str, pret_addr);
+	str[ret_byte_0] = 'h';
+	str[ret_byte_1] = '\0';
+	cprintf("%s%n\n", str, pret_addr+1);
+	str[ret_byte_1] = 'h';
+	str[ret_byte_2] = '\0';
+	cprintf("%s%n\n", str, pret_addr+2);
+	str[ret_byte_2] = 'h';
+	str[ret_byte_3] = '\0';
+	cprintf("%s%n\n", str, pret_addr+3);
 }
 
 void
@@ -104,6 +165,31 @@ int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
 	// Your code here.
+	uint32_t ebp = read_ebp();
+	uint32_t eip = read_eip();
+
+	cprintf("Stack backtrace:\n");
+	while(ebp != 0x0) {
+		eip = *((uint32_t*)ebp + 1);
+		cprintf("  eip %08x  ebp %08x  args %08x %08x %08x %08x %08x\n", eip, ebp, *((uint32_t*)ebp+2), *((uint32_t*)ebp+3), *((uint32_t*)ebp+4), *((uint32_t*)ebp+5), *((uint32_t*)ebp+6) );
+		
+		// debug info, zhe ge hai yao suan fen, WTF
+		struct Eipdebuginfo info;
+		if (debuginfo_eip(eip, &info) == 0) {
+			char temp[info.eip_fn_namelen+1];
+			temp[info.eip_fn_namelen] = '\0';
+			int i = 0;
+			for (i = 0; i < info.eip_fn_namelen; i++) {
+				temp[i] = info.eip_fn_name[i];
+			}
+			cprintf("         %s:%d: %s+%x\n", info.eip_file, info.eip_line, temp, eip-info.eip_fn_addr);
+		}
+		// debug info end
+
+		ebp = *((uint32_t*)ebp);
+	}
+	
+	
     overflow_me();
     cprintf("Backtrace success\n");
 	return 0;
