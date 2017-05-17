@@ -114,6 +114,10 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 		case '-':
 			padc = '-';
 			goto reswitch;
+
+		case '+':
+   			padc = '+';
+    		goto reswitch;
 			
 		// flag to pad with 0's instead of spaces
 		case '0':
