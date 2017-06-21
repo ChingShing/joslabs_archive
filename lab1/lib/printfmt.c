@@ -43,6 +43,9 @@ printnum(void (*putch)(int, void*), void *putdat,
 	// space on the right side if neccesary.
 	// you can add helper function if needed.
 	// your code here:
+	if (padc == '+')
+		putch(padc, putdat);
+
 	if (padc == '-' && width > padding_max_width)
 		padding_max_width = width;
 
@@ -133,6 +136,10 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 		case '-':
 			padc = '-';
 			goto reswitch;
+
+		case '+':
+			padc = '+';
+			goto reswitch;
 			
 		// flag to pad with 0's instead of spaces
 		case '0':
@@ -218,6 +225,9 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 			if ((long long) num < 0) {
 				putch('-', putdat);
 				num = -(long long) num;
+				if(padc == '+'){
+					padc = ' ';
+				}
 			}
 			base = 10;
 			goto number;

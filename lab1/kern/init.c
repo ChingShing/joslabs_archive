@@ -36,6 +36,7 @@ i386_init(void)
 	cons_init();
 
 	cprintf("6828 decimal is %o octal!%n\n%n", 6828, &chnum1, &chnum2);
+	cprintf("show me the sign: %+d %-d\n",1024, -1024);
 	cprintf("pading space in the right to number 22: %-8d.\n", 22);
     cprintf("chnum1: %d chnum2: %d\n", chnum1, chnum2);
     cprintf("%n", NULL);
