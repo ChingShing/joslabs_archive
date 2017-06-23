@@ -43,8 +43,8 @@ printnum(void (*putch)(int, void*), void *putdat,
 	// space on the right side if neccesary.
 	// you can add helper function if needed.
 	// // your code here:
-	if (padc == '+')
-		putch(padc, putdat);
+	// if (padc == '+')
+	// 	putch(padc, putdat);
 
 	if (padc == '-' && width > padding_max_width)
 		padding_max_width = width;
@@ -225,9 +225,8 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 			if ((long long) num < 0) {
 				putch('-', putdat);
 				num = -(long long) num;
-				// if(padc == '+'){
-				// 	padc = ' ';
-				// }
+			}else if(padc == '+'){
+				putch(padc, putdat);
 			}
 			base = 10;
 			goto number;
