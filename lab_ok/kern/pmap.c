@@ -491,6 +491,7 @@ struct PagePair find_free_page(physaddr_t pa) {
 		iter = iter->pp_link;
 	}
 	result.first = NULL;
+	result.second = mid;
 	return result;
 }
 
